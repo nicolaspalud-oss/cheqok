@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHEQ-OK · Evaluación de cheques</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,600&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e100f;
+    --bg-card: #15171a;
+    --bg-elev: #1c1f23;
+    --ink: #f4efe6;
+    --ink-dim: #9a9288;
+    --ink-faint: #5e5850;
+    --line: #2a2d31;
+    --accent: #d4b572;
+    --verde: #6ca368;
+    --verde-bg: #1a2b1a;
+    --rojo: #c25450;
+    --rojo-bg: #2b1a1a;
+    --amarillo: #d4a84a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Manrope', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.55;
+    padding: 0;
+    background-image:
+      radial-gradient(circle at 10% 0%, rgba(212, 181, 114, 0.04), transparent 40%),
+      radial-gradient(circle at 90% 100%, rgba(108, 163, 104, 0.03), transparent 40%);
+  }
+  .container {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* Encabezado */
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .brand-mark {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: 42px;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+  }
+  .brand-mark em {
+    font-style: italic;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .brand-tag {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+  .lead {
+    color: var(--ink-dim);
+    font-size: 15px;
+    max-width: 560px;
+    margin-bottom: 40px;
+  }
+
+  /* Panel de consulta */
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+  .panel-title {
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .form-row {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+  }
+  input[type="text"] {
+    flex: 1;
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    letter-spacing: 0.02em;
+    border-radius: 3px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+  button {
+    background: var(--accent);
+    color: #1a1612;
+    border: none;
+    padding: 0 28px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s;
+  }
+  button:hover:not(:disabled) {
+    background: #e0c485;
+  }
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .hint {
+    color: var(--ink-faint);
+    font-size: 12px;
+    margin-top: 12px;
+  }
+  .hint code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg-elev);
+    padding: 2px 6px;
+    border-radius: 2px;
+    color: var(--ink-dim);
+    cursor: pointer;
+  }
+  .hint code:hover {
+    color: var(--accent);
+  }
+
+  /* Ejemplos */
+  .ejemplos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 14px;
+  }
+  .ejemplos code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: var(--bg-elev);
+    padding: 5px 10px;
+    border-radius: 2px;
+    color: var(--ink-dim);
+    cursor: pointer;
+    border: 1px solid var(--line);
+    transition: all 0.15s;
+  }
+  .ejemplos code:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  /* Configuración (colapsable) */
+  details.config {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    margin-bottom: 24px;
+  }
+  details.config summary {
+    padding: 16px 24px;
+    cursor: pointer;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    font-weight: 600;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  details.config summary::after {
+    content: "+";
+    font-size: 18px;
+    color: var(--ink-faint);
+  }
+  details.config[open] summary::after {
+    content: "−";
+  }
+  .config-body {
+    padding: 0 24px 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .config-field label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+  .config-field input {
+    width: 100%;
+  }
+
+  /* Resultado */
+  .resultado {
+    margin-top: 24px;
+  }
+  .semaforo {
+    padding: 32px;
+    border-radius: 4px;
+    border: 1px solid;
+    margin-bottom: 20px;
+  }
+  .semaforo.verde {
+    background: var(--verde-bg);
+    border-color: var(--verde);
+  }
+  .semaforo.rojo {
+    background: var(--rojo-bg);
+    border-color: var(--rojo);
+  }
+  .semaforo-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .semaforo-luz {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .semaforo.verde .semaforo-luz {
+    background: radial-gradient(circle at 30% 30%, #8fd18a, var(--verde));
+    box-shadow: 0 0 24px rgba(108, 163, 104, 0.6);
+  }
+  .semaforo.rojo .semaforo-luz {
+    background: radial-gradient(circle at 30% 30%, #e07874, var(--rojo));
+    box-shadow: 0 0 24px rgba(194, 84, 80, 0.6);
+  }
+  .semaforo-titulo {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .semaforo-sub {
+    color: var(--ink-dim);
+    font-size: 14px;
+    margin-top: 2px;
+  }
+  .semaforo-mensaje {
+    font-size: 15px;
+    line-height: 1.6;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .denominacion {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin-top: 6px;
+  }
+
+  /* Motivos */
+  .section-title {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 28px 0 12px;
+    font-weight: 600;
+  }
+  .motivos {
+    list-style: none;
+  }
+  .motivo {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--line);
+    padding: 14px 18px;
+    margin-bottom: 8px;
+    border-radius: 2px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .motivo.rojo { border-left-color: var(--rojo); }
+  .motivo.amarillo { border-left-color: var(--amarillo); }
+  .motivo.info { border-left-color: var(--ink-dim); color: var(--ink-dim); }
+  .motivo-cat {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  /* Detalle técnico (JSON crudo) */
+  details.detalle {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    margin-top: 16px;
+  }
+  details.detalle summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+  details.detalle pre {
+    padding: 0 20px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+    overflow-x: auto;
+    line-height: 1.6;
+  }
+
+  /* Estados */
+  .loading {
+    text-align: center;
+    color: var(--ink-dim);
+    padding: 40px 20px;
+    font-size: 14px;
+  }
+  .loading::after {
+    content: "";
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-left: 8px;
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+  .error-box {
+    background: var(--rojo-bg);
+    border: 1px solid var(--rojo);
+    padding: 20px;
+    border-radius: 4px;
+    color: var(--ink);
+    margin-top: 20px;
+  }
+
+  /* Footer */
+  footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-faint);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  footer a {
+    color: var(--ink-dim);
+    text-decoration: underline;
+    text-decoration-color: var(--ink-faint);
+  }
+
+  @media (max-width: 640px) {
+    .form-row { flex-direction: column; }
+    button { padding: 14px; }
+    .config-body { grid-template-columns: 1fr; }
+    .brand-mark { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="brand">
+      <span class="brand-mark">cheq<em>·ok</em></span>
+      <span class="brand-tag">v0.1 · prototipo</span>
+    </div>
+    <p class="lead">
+      Evaluación automática de cheques argentinos con datos de la Central de
+      Deudores del BCRA. Ingresá el CUIT del librador y obtené una
+      recomendación: verde (conviene) o rojo (no conviene).
+    </p>
+
+    <div class="panel">
+      <div class="panel-title">Consulta</div>
+      <div class="form-row">
+        <input type="text" id="cuit" placeholder="CUIT (11 dígitos, con o sin guiones)" autocomplete="off">
+        <button id="btn-evaluar">Evaluar</button>
+      </div>
+      <div class="ejemplos">
+        <span style="color: var(--ink-faint); font-size: 11px; margin-right: 4px;">Ejemplos de los cheques:</span>
+        <code onclick="usarCuit('30-71069741-1')">30-71069741-1</code>
+        <code onclick="usarCuit('27-21651503-5')">27-21651503-5</code>
+        <code onclick="usarCuit('20-28606134-7')">20-28606134-7</code>
+        <code onclick="usarCuit('30-71857785-7')">30-71857785-7</code>
+        <code onclick="usarCuit('27-95735532-9')">27-95735532-9</code>
+      </div>
+    </div>
+
+    <details class="config">
+      <summary>Configuración de reglas</summary>
+      <div class="config-body">
+        <div class="config-field">
+          <label for="umbral">Umbral situación 2 (pesos)</label>
+          <input type="text" id="umbral" value="500000">
+        </div>
+        <div class="config-field">
+          <label for="meses">Ventana cheques rechazados (meses)</label>
+          <input type="text" id="meses" value="12">
+        </div>
+      </div>
+    </details>
+
+    <div id="resultado" class="resultado"></div>
+
+    <footer>
+      Los datos provienen de la <a href="https://www.bcra.gob.ar/" target="_blank">API pública del BCRA · Central de Deudores</a>.
+      La información publicada por el BCRA tiene un desfase de hasta 1-2 meses respecto del último período cerrado.
+      Esta herramienta es una ayuda a la decisión y no reemplaza el criterio del usuario.
+      <br><br>
+      <a href="#" id="cambiar-backend">Cambiar URL del backend</a> · <span id="backend-actual" style="font-family: 'JetBrains Mono', monospace;"></span>
+    </footer>
+  </div>
+
+<script>
+  // URL del backend. Se guarda en el navegador para que no haya que
+  // tipearla cada vez. La primera vez que se carga, pide que la ingreses.
+  let API_BASE = localStorage.getItem('cheqok_api_base') || '';
+  if (!API_BASE) {
+    API_BASE = prompt(
+      'URL del backend CHEQ-OK\n\n' +
+      'Ejemplo: https://cheqok-backend.onrender.com\n' +
+      '(o http://localhost:8000 si lo corrés local)',
+      'https://cheqok-backend.onrender.com'
+    ) || 'http://localhost:8000';
+    localStorage.setItem('cheqok_api_base', API_BASE);
+  }
+  // Para cambiarla después: en la consola del navegador ejecutar:
+  // localStorage.removeItem('cheqok_api_base') y recargar.
+
+  const $cuit = document.getElementById('cuit');
+  const $btn = document.getElementById('btn-evaluar');
+  const $out = document.getElementById('resultado');
+  const $umbral = document.getElementById('umbral');
+  const $meses = document.getElementById('meses');
+
+  function usarCuit(c) {
+    $cuit.value = c;
+    evaluar();
+  }
+
+  function fmtPesos(n) {
+    return '$' + Number(n).toLocaleString('es-AR', { maximumFractionDigits: 0 });
+  }
+
+  async function guardarConfig() {
+    const body = {
+      umbral_monto_sit2: Number($umbral.value.replace(/[^\d.]/g, '')),
+      meses_rechazo_reciente: Number($meses.value),
+    };
+    try {
+      await fetch(`${API_BASE}/config`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body),
+      });
+    } catch (e) { /* si falla, seguimos igual */ }
+  }
+
+  async function evaluar() {
+    const cuit = $cuit.value.trim();
+    if (!cuit) { $cuit.focus(); return; }
+
+    $btn.disabled = true;
+    $out.innerHTML = '<div class="loading">Consultando BCRA</div>';
+
+    await guardarConfig();
+
+    try {
+      const r = await fetch(`${API_BASE}/evaluar/${encodeURIComponent(cuit)}`);
+      const data = await r.json();
+
+      if (!r.ok) {
+        $out.innerHTML = `<div class="error-box"><strong>Error ${r.status}:</strong> ${data.detail || 'Consulta fallida'}</div>`;
+        return;
+      }
+
+      renderResultado(data);
+    } catch (e) {
+      $out.innerHTML = `
+        <div class="error-box">
+          <strong>No se pudo conectar al backend.</strong><br>
+          Asegurate de que el backend esté corriendo en <code>${API_BASE}</code>.<br>
+          <small>Detalle: ${e.message}</small>
+        </div>`;
+    } finally {
+      $btn.disabled = false;
+    }
+  }
+
+  function renderResultado(data) {
+    const clase = data.semaforo.toLowerCase();
+    const titulo = data.semaforo === 'VERDE' ? 'Conviene recibir' : 'No conviene recibir';
+
+    let html = `
+      <div class="semaforo ${clase}">
+        <div class="semaforo-header">
+          <div class="semaforo-luz"></div>
+          <div>
+            <div class="semaforo-titulo">${titulo}</div>
+            <div class="semaforo-sub">CUIT ${data.cuit}</div>
+            ${data.denominacion ? `<div class="denominacion">${data.denominacion}</div>` : ''}
+          </div>
+        </div>
+        <div class="semaforo-mensaje">${data.resumen}</div>
+      </div>
+    `;
+
+    if (data.motivos && data.motivos.length > 0) {
+      html += '<div class="section-title">Motivos</div><ul class="motivos">';
+      for (const m of data.motivos) {
+        const catLabel = {
+          situacion_crediticia: 'Situación crediticia',
+          cheque_pendiente: 'Cheque pendiente',
+          cheque_reciente: 'Cheque rechazado reciente',
+          sin_antecedentes: 'Sin antecedentes',
+        }[m.categoria] || m.categoria;
+        html += `
+          <li class="motivo ${m.severidad}">
+            <div class="motivo-cat">${catLabel}</div>
+            ${m.descripcion}
+          </li>`;
+      }
+      html += '</ul>';
+    }
+
+    html += `
+      <details class="detalle">
+        <summary>Ver respuesta completa del BCRA (JSON)</summary>
+        <pre>${JSON.stringify({
+          deudas: data.detalle_deudas,
+          cheques_rechazados: data.detalle_cheques_rechazados,
+          consultado_en: data.consultado_en,
+          config_aplicada: data.config_aplicada,
+        }, null, 2)}</pre>
+      </details>
+    `;
+
+    $out.innerHTML = html;
+  }
+
+  $btn.addEventListener('click', evaluar);
+  $cuit.addEventListener('keydown', e => { if (e.key === 'Enter') evaluar(); });
+
+  // Mostrar URL actual del backend y permitir cambiarla
+  document.getElementById('backend-actual').textContent = API_BASE;
+  document.getElementById('cambiar-backend').addEventListener('click', (e) => {
+    e.preventDefault();
+    localStorage.removeItem('cheqok_api_base');
+    location.reload();
+  });
+</script>
+</body>
+</html>
