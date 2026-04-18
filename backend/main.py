@@ -1,10 +1,6 @@
-"""
-CHEQ-OK · Backend (v0.1.2 - con endpoint de diagnóstico)
-"""
+"""CHEQ-OK · Backend v0.1.3 (con cache + manejo robusto)"""
 
 import asyncio
-import socket
-import ssl
 import time
 from datetime import datetime, timedelta
 from typing import Optional
@@ -17,15 +13,15 @@ from pydantic import BaseModel, Field
 from config import get_config, set_config
 
 BCRA_BASE = "https://api.bcra.gob.ar/centraldedeudores/v1.0/Deudas"
-BCRA_HOST = "api.bcra.gob.ar"
-HTTP_TIMEOUT = 30.0
-HTTP_REINTENTOS = 3
+HTTP_TIMEOUT = 45.0
+HTTP_REINTENTOS = 4
+CACHE_TTL_SEGUNDOS = 3600  # 1 hora
 
-app = FastAPI(title="CHEQ-OK API", version="0.1.2")
+# Cache simple en memoria: {(endpoint, cuit): (timestamp, resultado)}
+_CACHE: dict[tuple, tuple[float, Optional[dict]]] = {}
 
-app.add_middleware(
-    CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
-)
+app = FastAPI(title="CHEQ-OK API", version="0.1.3")
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
 class MotivoDecision(BaseModel):
@@ -44,6 +40,7 @@ class Evaluacion(BaseModel):
     detalle_cheques_rechazados: Optional[dict] = None
     consultado_en: datetime
     config_aplicada: dict
+    desde_cache: bool = False
 
 
 def validar_cuit(cuit: str) -> str:
@@ -53,29 +50,71 @@ def validar_cuit(cuit: str) -> str:
     return limpio
 
 
-async def consultar_bcra(endpoint: str, cuit: str) -> Optional[dict]:
+def _cache_get(endpoint: str, cuit: str):
+    key = (endpoint, cuit)
+    if key in _CACHE:
+        ts, val = _CACHE[key]
+        if time.time() - ts < CACHE_TTL_SEGUNDOS:
+            return True, val
+        del _CACHE[key]
+    return False, None
+
+
+def _cache_set(endpoint: str, cuit: str, val):
+    _CACHE[(endpoint, cuit)] = (time.time(), val)
+
+
+async def consultar_bcra(endpoint: str, cuit: str) -> tuple[Optional[dict], bool]:
+    """Devuelve (datos, desde_cache)."""
+    hit, val = _cache_get(endpoint, cuit)
+    if hit:
+        return val, True
+
     url = f"{BCRA_BASE}/{endpoint}/{cuit}" if endpoint else f"{BCRA_BASE}/{cuit}"
     ultimo_error = None
+
     for intento in range(HTTP_REINTENTOS):
         try:
-            async with httpx.AsyncClient(timeout=HTTP_TIMEOUT, verify=False) as client:
-                r = await client.get(url, headers={"User-Agent": "Mozilla/5.0 cheqok/0.1"})
+            async with httpx.AsyncClient(
+                timeout=HTTP_TIMEOUT,
+                verify=False,
+                follow_redirects=True,
+            ) as client:
+                r = await client.get(
+                    url,
+                    headers={
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                        "Accept": "application/json",
+                        "Accept-Language": "es-AR,es;q=0.9,en;q=0.8",
+                    },
+                )
+
             if r.status_code == 404:
-                return None
+                _cache_set(endpoint, cuit, None)
+                return None, False
             if r.status_code == 200:
-                return r.json().get("results")
+                datos = r.json().get("results")
+                _cache_set(endpoint, cuit, datos)
+                return datos, False
+
             if 500 <= r.status_code < 600:
                 ultimo_error = f"BCRA respondió {r.status_code}"
-                await asyncio.sleep(2 ** intento)
+                await asyncio.sleep(1 + intento * 2)
                 continue
+
             raise HTTPException(502, f"BCRA devolvió status {r.status_code}")
+
         except httpx.TimeoutException:
-            ultimo_error = "timeout después de 30s"
-            await asyncio.sleep(2 ** intento)
+            ultimo_error = f"timeout después de {HTTP_TIMEOUT}s"
+            await asyncio.sleep(1 + intento * 2)
+        except httpx.ReadError as exc:
+            ultimo_error = f"conexión cortada por el BCRA (ReadError)"
+            await asyncio.sleep(2 + intento * 3)  # más tiempo para rate limit
         except Exception as exc:
             ultimo_error = f"{type(exc).__name__}: {str(exc)[:150]}"
-            await asyncio.sleep(2 ** intento)
-    raise HTTPException(502, f"No se pudo conectar al BCRA tras {HTTP_REINTENTOS} intentos. Último error: {ultimo_error}")
+            await asyncio.sleep(1 + intento * 2)
+
+    raise HTTPException(502, f"BCRA no disponible tras {HTTP_REINTENTOS} intentos. {ultimo_error}. Probá en unos minutos.")
 
 
 def evaluar_situacion_crediticia(deudas, cfg):
@@ -89,7 +128,7 @@ def evaluar_situacion_crediticia(deudas, cfg):
         monto_pesos = float(ent.get("monto", 0)) * 1000
         entidad_nombre = ent.get("entidad", "entidad")
         if situacion >= 3:
-            etiquetas = {3: "Situación 3 (Con problemas)", 4: "Situación 4 (Alto riesgo)", 5: "Situación 5 (Irrecuperable)", 6: "Situación 6 (Irrec. disposición técnica)"}
+            etiquetas = {3: "Situación 3 (Con problemas)", 4: "Situación 4 (Alto riesgo)", 5: "Situación 5 (Irrecuperable)", 6: "Situación 6"}
             motivos.append(MotivoDecision(categoria="situacion_crediticia", descripcion=f"{etiquetas.get(situacion, f'Situación {situacion}')} en {entidad_nombre}. Deuda: ${monto_pesos:,.0f}.", severidad="rojo"))
         elif situacion == 2 and monto_pesos > cfg["umbral_monto_sit2"]:
             motivos.append(MotivoDecision(categoria="situacion_crediticia", descripcion=f"Situación 2 en {entidad_nombre} con deuda ${monto_pesos:,.0f}, supera umbral.", severidad="rojo"))
@@ -132,81 +171,62 @@ def _parse_fecha(s):
 
 @app.get("/")
 async def root():
-    return {"servicio": "CHEQ-OK API", "version": "0.1.2", "endpoints": {"evaluar": "/evaluar/{cuit}", "config": "/config", "diagnostico": "/diagnostico/{cuit}", "docs": "/docs"}}
-
-
-@app.get("/diagnostico/{cuit}")
-async def diagnostico(cuit: str):
-    """Endpoint para diagnosticar problemas de conectividad con el BCRA."""
-    cuit_limpio = validar_cuit(cuit)
-    resultados = {}
-
-    # 1. Resolución DNS
-    try:
-        inicio = time.time()
-        ip = socket.gethostbyname(BCRA_HOST)
-        resultados["dns"] = {"ok": True, "ip": ip, "tiempo_ms": round((time.time()-inicio)*1000)}
-    except Exception as e:
-        resultados["dns"] = {"ok": False, "error": str(e)}
-
-    # 2. Conexión TCP al puerto 443
-    try:
-        inicio = time.time()
-        with socket.create_connection((BCRA_HOST, 443), timeout=10) as sock:
-            pass
-        resultados["tcp_443"] = {"ok": True, "tiempo_ms": round((time.time()-inicio)*1000)}
-    except Exception as e:
-        resultados["tcp_443"] = {"ok": False, "error": f"{type(e).__name__}: {e}"}
-
-    # 3. Handshake SSL
-    try:
-        inicio = time.time()
-        ctx = ssl.create_default_context()
-        with socket.create_connection((BCRA_HOST, 443), timeout=10) as sock:
-            with ctx.wrap_socket(sock, server_hostname=BCRA_HOST) as ssock:
-                cert = ssock.getpeercert()
-        resultados["ssl"] = {"ok": True, "tiempo_ms": round((time.time()-inicio)*1000), "cert_subject": str(cert.get('subject', '?'))[:200]}
-    except Exception as e:
-        resultados["ssl"] = {"ok": False, "error": f"{type(e).__name__}: {e}"}
-
-    # 4. Petición HTTP real (con verify)
-    url = f"{BCRA_BASE}/{cuit_limpio}"
-    try:
-        inicio = time.time()
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            r = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
-        resultados["http_verify_on"] = {"ok": True, "status": r.status_code, "tiempo_ms": round((time.time()-inicio)*1000), "body_preview": r.text[:300]}
-    except Exception as e:
-        resultados["http_verify_on"] = {"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"}
-
-    # 5. Petición HTTP sin verify
-    try:
-        inicio = time.time()
-        async with httpx.AsyncClient(timeout=30.0, verify=False) as client:
-            r = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
-        resultados["http_verify_off"] = {"ok": True, "status": r.status_code, "tiempo_ms": round((time.time()-inicio)*1000), "body_preview": r.text[:300]}
-    except Exception as e:
-        resultados["http_verify_off"] = {"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"}
-
-    # 6. Petición a otro sitio para verificar que hay salida a internet
-    try:
-        inicio = time.time()
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            r = await client.get("https://httpbin.org/get")
-        resultados["control_internet"] = {"ok": True, "status": r.status_code, "tiempo_ms": round((time.time()-inicio)*1000)}
-    except Exception as e:
-        resultados["control_internet"] = {"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"}
-
-    return {"cuit": cuit_limpio, "host": BCRA_HOST, "diagnostico": resultados}
+    return {"servicio": "CHEQ-OK API", "version": "0.1.3", "cache_entries": len(_CACHE), "endpoints": {"evaluar": "/evaluar/{cuit}", "config": "/config", "docs": "/docs"}}
 
 
 @app.get("/evaluar/{cuit}", response_model=Evaluacion)
 async def evaluar(cuit: str):
     cuit_limpio = validar_cuit(cuit)
     cfg = get_config()
-    deudas = await consultar_bcra("", cuit_limpio)
-    cheques = await consultar_bcra("ChequesRechazados", cuit_limpio)
+
+    deudas, d_cache = await consultar_bcra("", cuit_limpio)
+    cheques, c_cache = await consultar_bcra("ChequesRechazados", cuit_limpio)
+    desde_cache = d_cache and c_cache
+
     motivos = []
     denominacion = None
+
     if deudas is None and cheques is None:
-        return Evaluacion(cuit=cuit_limpio, denomin
+        return Evaluacion(cuit=cuit_limpio, denominacion=None, semaforo="VERDE",
+            motivos=[MotivoDecision(categoria="sin_antecedentes", descripcion="El CUIT no figura en la Central de Deudores del BCRA.", severidad="info")],
+            resumen="VERDE · Sin antecedentes en BCRA.", consultado_en=datetime.now(), config_aplicada=cfg, desde_cache=desde_cache)
+    if deudas:
+        denominacion = deudas.get("denominacion")
+        motivos.extend(evaluar_situacion_crediticia(deudas, cfg))
+    if cheques:
+        if not denominacion:
+            denominacion = cheques.get("denominacion")
+        motivos.extend(evaluar_cheques_rechazados(cheques, cfg))
+
+    hay_rojo = any(m.severidad == "rojo" for m in motivos)
+    semaforo = "ROJO" if hay_rojo else "VERDE"
+    resumen = f"ROJO · {len(motivos)} motivo(s) detectado(s)." if semaforo == "ROJO" else "VERDE · No se detectaron alertas."
+    return Evaluacion(cuit=cuit_limpio, denominacion=denominacion, semaforo=semaforo, motivos=motivos, resumen=resumen, detalle_deudas=deudas, detalle_cheques_rechazados=cheques, consultado_en=datetime.now(), config_aplicada=cfg, desde_cache=desde_cache)
+
+
+@app.get("/config")
+async def ver_config():
+    return get_config()
+
+
+class ConfigUpdate(BaseModel):
+    umbral_monto_sit2: Optional[float] = Field(None, ge=0)
+    meses_rechazo_reciente: Optional[int] = Field(None, ge=0, le=120)
+
+
+@app.post("/config")
+async def actualizar_config(body: ConfigUpdate):
+    nuevos = {k: v for k, v in body.dict().items() if v is not None}
+    return set_config(nuevos)
+
+
+@app.post("/cache/clear")
+async def limpiar_cache():
+    cantidad = len(_CACHE)
+    _CACHE.clear()
+    return {"eliminadas": cantidad}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
