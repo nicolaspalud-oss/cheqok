@@ -374,6 +374,45 @@
     return `${c.substring(0, 2)}-${c.substring(2, 10)}-${c.substring(10)}`;
   }
 
+  async function rotarImagen(file, grados) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (grados === 90 || grados === 270) {
+          canvas.width = img.height;
+          canvas.height = img.width;
+        } else {
+          canvas.width = img.width;
+          canvas.height = img.height;
+        }
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(grados * Math.PI / 180);
+        ctx.drawImage(img, -img.width / 2, -img.height / 2);
+        canvas.toBlob(resolve, 'image/jpeg', 0.9);
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  async function probarOrientacion(imagen, label, onProgress) {
+    try {
+      const { data } = await Tesseract.recognize(imagen, 'spa+eng', {
+        logger: m => {
+          if (m.status === 'recognizing text' && onProgress) {
+            onProgress(m.progress);
+          }
+        }
+      });
+      const candidatos = extraerCuitDeTexto(data.text);
+      return { label, texto: data.text, candidatos, confianza: data.confidence || 0 };
+    } catch (e) {
+      return { label, texto: '', candidatos: [], confianza: 0 };
+    }
+  }
+
   async function procesarImagen(file) {
     $ocrCandidatos.innerHTML = '';
     $out.innerHTML = '';
@@ -383,43 +422,73 @@
     $ocrProgress.style.display = 'block';
     $ocrProgress.innerHTML = `
       <div class="ocr-progress">
-        <div class="ocr-progress-label">Leyendo el cheque... <span id="ocr-pct">0%</span></div>
+        <div class="ocr-progress-label">Leyendo el cheque... <span id="ocr-pct">Probando orientación 1/4</span></div>
         <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocr-fill" style="width:0%"></div></div>
       </div>`;
+
     try {
-      const { data } = await Tesseract.recognize(file, 'spa+eng', {
-        logger: m => {
-          if (m.status === 'recognizing text') {
-            const pct = Math.round(m.progress * 100);
-            document.getElementById('ocr-pct').textContent = pct + '%';
-            document.getElementById('ocr-fill').style.width = pct + '%';
-          } else if (m.status) {
-            document.getElementById('ocr-pct').textContent = m.status;
-          }
+      // Probamos 4 orientaciones: 0°, 90°, 180°, 270°
+      const orientaciones = [0, 90, 180, 270];
+      const resultados = [];
+      let mejorResultado = null;
+
+      for (let i = 0; i < orientaciones.length; i++) {
+        const grados = orientaciones[i];
+        document.getElementById('ocr-pct').textContent =
+          `Probando orientación ${i + 1}/4 (${grados}°)`;
+
+        const imagen = grados === 0 ? file : await rotarImagen(file, grados);
+
+        const resultado = await probarOrientacion(imagen, `${grados}°`, (p) => {
+          const totalProgress = (i + p) / 4;
+          document.getElementById('ocr-fill').style.width = Math.round(totalProgress * 100) + '%';
+        });
+
+        resultados.push(resultado);
+
+        // Si encontramos CUIT con alta confianza, cortamos el loop
+        if (resultado.candidatos.length > 0 && resultado.confianza > 60) {
+          mejorResultado = resultado;
+          break;
         }
-      });
+      }
+
+      // Si no cortamos, elegimos el mejor
+      if (!mejorResultado) {
+        // Priorizamos los que tienen candidatos
+        const conCuit = resultados.filter(r => r.candidatos.length > 0);
+        if (conCuit.length > 0) {
+          mejorResultado = conCuit.sort((a, b) => b.confianza - a.confianza)[0];
+        } else {
+          // Ninguna orientación encontró CUIT
+          mejorResultado = resultados.sort((a, b) => b.confianza - a.confianza)[0];
+        }
+      }
+
       $ocrProgress.style.display = 'none';
-      const candidatos = extraerCuitDeTexto(data.text);
+      const candidatos = mejorResultado.candidatos;
+
       if (candidatos.length === 0) {
         $ocrCandidatos.innerHTML = `
           <div class="ocr-candidatos">
             <div class="ocr-candidatos-titulo">⚠ No se detectó un CUIT claro</div>
             <div style="color:var(--tinta-dim); font-size:13px; margin-top:8px;">
-              Probá con una foto más clara o ingresá el CUIT manualmente en la pestaña "Ingresar CUIT".
+              Probá con una foto más clara, con buena iluminación y enfocando bien el sector del CUIT al pie del cheque.
+              También podés ingresar el CUIT manualmente en la pestaña "Ingresar CUIT".
             </div>
           </div>`;
       } else if (candidatos.length === 1) {
         $cuit.value = formatearCuit(candidatos[0]);
         $ocrCandidatos.innerHTML = `
           <div class="ocr-candidatos" style="background:var(--azul-muy-claro); border-color:var(--azul-medio); border-left-color:var(--azul-medio);">
-            <div class="ocr-candidatos-titulo" style="color:var(--azul-profundo);">✓ CUIT detectado: ${formatearCuit(candidatos[0])}</div>
+            <div class="ocr-candidatos-titulo" style="color:var(--azul-profundo);">✓ CUIT detectado (orientación ${mejorResultado.label}): ${formatearCuit(candidatos[0])}</div>
             <div style="color:var(--tinta-dim); font-size:13px; margin-top:8px;">Consultando BCRA automáticamente...</div>
           </div>`;
         evaluar();
       } else {
         let html = `
           <div class="ocr-candidatos">
-            <div class="ocr-candidatos-titulo">Se detectaron varios CUIT. Elegí el del librador:</div>
+            <div class="ocr-candidatos-titulo">Se detectaron varios CUIT (orientación ${mejorResultado.label}). Elegí el del librador:</div>
             <div class="ocr-candidatos-lista">`;
         for (const c of candidatos) {
           html += `<button class="ocr-candidato-btn" onclick="usarCuit('${formatearCuit(c)}')">${formatearCuit(c)}</button>`;
