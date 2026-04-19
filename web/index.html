@@ -36,13 +36,7 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
-  body {
-    font-family: 'Inter', -apple-system, sans-serif;
-    background: var(--crema);
-    color: var(--tinta);
-    min-height: 100vh;
-    line-height: 1.55;
-  }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: var(--crema); color: var(--tinta); min-height: 100vh; line-height: 1.55; }
   .topbar { background: var(--blanco); border-bottom: 1px solid var(--linea); padding: 0; }
   .topbar-inner { max-width: 980px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; }
   .logo-wrap { display: flex; align-items: center; gap: 14px; }
@@ -55,7 +49,6 @@
   h1.titulo em { font-style: italic; font-weight: 500; color: var(--azul-medio); }
   .lead { color: var(--tinta-dim); font-size: 16px; max-width: 620px; line-height: 1.7; }
   .panel { background: var(--blanco); border: 1px solid var(--linea); border-radius: 6px; padding: 32px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0, 49, 99, 0.04); }
-  .panel-title { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--tinta-faint); margin-bottom: 18px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
   .form-row { display: flex; gap: 12px; align-items: stretch; }
   input[type="text"] { flex: 1; background: var(--crema); border: 1px solid var(--linea-fuerte); color: var(--tinta); padding: 15px 18px; font-family: 'JetBrains Mono', monospace; font-size: 15px; letter-spacing: 0.02em; border-radius: 4px; outline: none; transition: all 0.15s; }
   input[type="text"]:focus { border-color: var(--azul-medio); background: var(--blanco); box-shadow: 0 0 0 3px rgba(39, 122, 192, 0.15); }
@@ -79,7 +72,7 @@
   .ocr-candidatos-lista { display: flex; flex-wrap: wrap; gap: 8px; }
   .ocr-candidato-btn { background: var(--blanco); border: 1px solid var(--linea-fuerte); color: var(--azul-profundo); padding: 10px 14px; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; border-radius: 3px; cursor: pointer; transition: all 0.15s; }
   .ocr-candidato-btn:hover { border-color: var(--azul-medio); background: var(--azul-muy-claro); }
-  .tabs { display: flex; gap: 2px; margin-bottom: 0; border-bottom: 1px solid var(--linea); }
+  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--linea); }
   .tab-btn { background: transparent; border: none; padding: 14px 20px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tinta-faint); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; margin-bottom: -1px; }
   .tab-btn:hover { color: var(--azul-medio); }
   .tab-btn.active { color: var(--azul-profundo); border-bottom-color: var(--azul-profundo); }
@@ -158,7 +151,7 @@
       <div class="logo-wrap">
         <img src="assets/logo.png" alt="Familia Inversora" class="logo-img">
       </div>
-      <div class="topbar-meta">CHEQ · OK <span style="color:var(--linea-fuerte); margin:0 6px;">/</span> v0.2</div>
+      <div class="topbar-meta">CHEQ · OK <span style="color:var(--linea-fuerte); margin:0 6px;">/</span> v0.2.1</div>
     </div>
   </div>
 
@@ -236,7 +229,9 @@
         <a href="#" id="cambiar-backend">Cambiar URL del backend</a> · <span id="backend-actual"></span>
       </div>
     </footer>
-  </div><script>
+  </div>
+
+<script>
   // CONFIGURACIÓN BACKEND
   let API_BASE = localStorage.getItem('cheqok_api_base') || '';
   if (!API_BASE) {
@@ -397,6 +392,23 @@
     });
   }
 
+  // Filtra los CUIT encontrados tomando solo los que estén en la MITAD INFERIOR
+  // de la imagen (y >= 50% del alto). Ahí está el CUIT del librador.
+  function extraerCuitConPosicion(data) {
+    if (!data.words || data.words.length === 0) {
+      return extraerCuitDeTexto(data.text);
+    }
+    const altoImagen = Math.max(...data.words.map(w => w.bbox ? w.bbox.y1 : 0)) || 1;
+    const umbralY = altoImagen * 0.50; // descartamos el 50% superior
+    let textoFiltrado = '';
+    for (const w of data.words) {
+      if (w.bbox && w.bbox.y0 >= umbralY) {
+        textoFiltrado += ' ' + w.text;
+      }
+    }
+    return extraerCuitDeTexto(textoFiltrado);
+  }
+
   async function probarOrientacion(imagen, label, onProgress) {
     try {
       const { data } = await Tesseract.recognize(imagen, 'spa+eng', {
@@ -406,10 +418,9 @@
           }
         }
       });
-      const candidatos = extraerCuitDeTexto(data.text);
-      return { label, texto: data.text, candidatos, confianza: data.confidence || 0 };
+      return { label, data, confianza: data.confidence || 0 };
     } catch (e) {
-      return { label, texto: '', candidatos: [], confianza: 0 };
+      return { label, data: null, confianza: 0 };
     }
   }
 
@@ -422,58 +433,67 @@
     $ocrProgress.style.display = 'block';
     $ocrProgress.innerHTML = `
       <div class="ocr-progress">
-        <div class="ocr-progress-label">Leyendo el cheque... <span id="ocr-pct">Probando orientación 1/4</span></div>
+        <div class="ocr-progress-label">Leyendo el cheque... <span id="ocr-pct">Probando orientaciones</span></div>
         <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocr-fill" style="width:0%"></div></div>
       </div>`;
 
     try {
-      // Probamos 4 orientaciones: 0°, 90°, 180°, 270°
-      const orientaciones = [0, 90, 180, 270];
-      const resultados = [];
+      // Orden optimizado: primero 0°, luego 270° (cheque fotografiado acostado
+      // hacia la izquierda), después 90° y finalmente 180°.
+      const orientaciones = [0, 270, 90, 180];
       let mejorResultado = null;
 
       for (let i = 0; i < orientaciones.length; i++) {
         const grados = orientaciones[i];
         document.getElementById('ocr-pct').textContent =
-          `Probando orientación ${i + 1}/4 (${grados}°)`;
+          `Analizando orientación ${i + 1}/4 (${grados}°)`;
 
         const imagen = grados === 0 ? file : await rotarImagen(file, grados);
-
         const resultado = await probarOrientacion(imagen, `${grados}°`, (p) => {
           const totalProgress = (i + p) / 4;
           document.getElementById('ocr-fill').style.width = Math.round(totalProgress * 100) + '%';
         });
 
-        resultados.push(resultado);
+        if (!resultado.data) continue;
 
-        // Si encontramos CUIT con alta confianza, cortamos el loop
-        if (resultado.candidatos.length > 0 && resultado.confianza > 60) {
-          mejorResultado = resultado;
+        // Filtramos candidatos por posición: solo los del 50% inferior
+        const candidatos = extraerCuitConPosicion(resultado.data);
+
+        if (candidatos.length > 0 && resultado.confianza > 50) {
+          mejorResultado = { ...resultado, candidatos };
           break;
+        }
+        if (candidatos.length > 0 && (!mejorResultado || resultado.confianza > mejorResultado.confianza)) {
+          mejorResultado = { ...resultado, candidatos };
         }
       }
 
-      // Si no cortamos, elegimos el mejor
-      if (!mejorResultado) {
-        // Priorizamos los que tienen candidatos
-        const conCuit = resultados.filter(r => r.candidatos.length > 0);
-        if (conCuit.length > 0) {
-          mejorResultado = conCuit.sort((a, b) => b.confianza - a.confianza)[0];
-        } else {
-          // Ninguna orientación encontró CUIT
-          mejorResultado = resultados.sort((a, b) => b.confianza - a.confianza)[0];
+      // Fallback: si no encontramos nada en el pie, buscamos en toda la imagen
+      if (!mejorResultado || mejorResultado.candidatos.length === 0) {
+        document.getElementById('ocr-pct').textContent = 'Ampliando búsqueda a toda la imagen...';
+        for (let i = 0; i < orientaciones.length; i++) {
+          const grados = orientaciones[i];
+          const imagen = grados === 0 ? file : await rotarImagen(file, grados);
+          const resultado = await probarOrientacion(imagen, `${grados}° (completa)`);
+          if (resultado.data) {
+            const candidatos = extraerCuitDeTexto(resultado.data.text);
+            if (candidatos.length > 0) {
+              mejorResultado = { ...resultado, candidatos };
+              break;
+            }
+          }
         }
       }
 
       $ocrProgress.style.display = 'none';
-      const candidatos = mejorResultado.candidatos;
+      const candidatos = mejorResultado ? mejorResultado.candidatos : [];
 
       if (candidatos.length === 0) {
         $ocrCandidatos.innerHTML = `
           <div class="ocr-candidatos">
             <div class="ocr-candidatos-titulo">⚠ No se detectó un CUIT claro</div>
             <div style="color:var(--tinta-dim); font-size:13px; margin-top:8px;">
-              Probá con una foto más clara, con buena iluminación y enfocando bien el sector del CUIT al pie del cheque.
+              Probá con una foto más nítida, con buena iluminación, y asegurate de que se vea bien el pie del cheque donde está el CUIT del librador.
               También podés ingresar el CUIT manualmente en la pestaña "Ingresar CUIT".
             </div>
           </div>`;
@@ -481,14 +501,14 @@
         $cuit.value = formatearCuit(candidatos[0]);
         $ocrCandidatos.innerHTML = `
           <div class="ocr-candidatos" style="background:var(--azul-muy-claro); border-color:var(--azul-medio); border-left-color:var(--azul-medio);">
-            <div class="ocr-candidatos-titulo" style="color:var(--azul-profundo);">✓ CUIT detectado (orientación ${mejorResultado.label}): ${formatearCuit(candidatos[0])}</div>
+            <div class="ocr-candidatos-titulo" style="color:var(--azul-profundo);">✓ CUIT detectado (${mejorResultado.label}): ${formatearCuit(candidatos[0])}</div>
             <div style="color:var(--tinta-dim); font-size:13px; margin-top:8px;">Consultando BCRA automáticamente...</div>
           </div>`;
         evaluar();
       } else {
         let html = `
           <div class="ocr-candidatos">
-            <div class="ocr-candidatos-titulo">Se detectaron varios CUIT (orientación ${mejorResultado.label}). Elegí el del librador:</div>
+            <div class="ocr-candidatos-titulo">Se detectaron varios CUIT (${mejorResultado.label}). Elegí el del librador:</div>
             <div class="ocr-candidatos-lista">`;
         for (const c of candidatos) {
           html += `<button class="ocr-candidato-btn" onclick="usarCuit('${formatearCuit(c)}')">${formatearCuit(c)}</button>`;
