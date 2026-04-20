@@ -1,4 +1,4 @@
-"""CHEQ-OK · Backend v0.2.0 (paralelo + cache 24hs + anti rate-limit)"""
+"""CHEQ-OK · Backend v0.2.1 (reintentos agresivos + mejor manejo del ReadError)"""
 
 import asyncio
 import time
@@ -13,20 +13,21 @@ from pydantic import BaseModel, Field
 from config import get_config, set_config
 
 BCRA_BASE = "https://api.bcra.gob.ar/centraldedeudores/v1.0/Deudas"
-HTTP_TIMEOUT = 45.0
-HTTP_REINTENTOS = 4
-CACHE_TTL_SEGUNDOS = 24 * 3600  # 24 horas (antes era 1 hora)
+HTTP_TIMEOUT = 30.0
 
-# Cache en memoria
+# Reintentos más agresivos para ReadError (el caso típico del BCRA)
+HTTP_REINTENTOS_READERROR = 8
+HTTP_REINTENTOS_OTROS = 4
+
+CACHE_TTL_SEGUNDOS = 24 * 3600  # 24 horas
+
 _CACHE: dict[tuple, tuple[float, Optional[dict]]] = {}
-
-# Control de rate limit: momento de la última consulta al BCRA
 _ULTIMA_CONSULTA_BCRA = 0.0
-_DELAY_ENTRE_CONSULTAS = 0.5  # 500ms mínimo entre consultas al BCRA
+_DELAY_ENTRE_CONSULTAS = 0.3
 _LOCK_BCRA = asyncio.Lock()
 
 
-app = FastAPI(title="CHEQ-OK API", version="0.2.0")
+app = FastAPI(title="CHEQ-OK API", version="0.2.1")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
@@ -48,6 +49,7 @@ class Evaluacion(BaseModel):
     config_aplicada: dict
     desde_cache: bool = False
     tiempo_ms: int = 0
+    intentos: int = 1
 
 
 def validar_cuit(cuit: str) -> str:
@@ -71,21 +73,23 @@ def _cache_set(endpoint: str, cuit: str, val):
     _CACHE[(endpoint, cuit)] = (time.time(), val)
 
 
-async def consultar_bcra(endpoint: str, cuit: str) -> tuple[Optional[dict], bool]:
-    """Devuelve (datos, desde_cache). Aplica delay mínimo entre consultas al BCRA
-    para evitar rate limit."""
+async def consultar_bcra(endpoint: str, cuit: str) -> tuple[Optional[dict], bool, int]:
+    """Devuelve (datos, desde_cache, intentos_usados).
+    Reintenta agresivamente cuando el BCRA corta la conexión (ReadError)."""
     global _ULTIMA_CONSULTA_BCRA
 
     hit, val = _cache_get(endpoint, cuit)
     if hit:
-        return val, True
+        return val, True, 0
 
     url = f"{BCRA_BASE}/{endpoint}/{cuit}" if endpoint else f"{BCRA_BASE}/{cuit}"
     ultimo_error = None
+    intentos_readerror = 0
+    max_intentos = HTTP_REINTENTOS_READERROR  # Arrancamos con el tope más alto
 
-    for intento in range(HTTP_REINTENTOS):
+    intento = 0
+    while intento < max_intentos:
         try:
-            # Respeta el delay mínimo entre consultas al BCRA (rate limit)
             async with _LOCK_BCRA:
                 elapsed = time.time() - _ULTIMA_CONSULTA_BCRA
                 if elapsed < _DELAY_ENTRE_CONSULTAS:
@@ -101,28 +105,49 @@ async def consultar_bcra(endpoint: str, cuit: str) -> tuple[Optional[dict], bool
 
             if r.status_code == 404:
                 _cache_set(endpoint, cuit, None)
-                return None, False
+                return None, False, intento + 1
             if r.status_code == 200:
                 datos = r.json().get("results")
                 _cache_set(endpoint, cuit, datos)
-                return datos, False
+                return datos, False, intento + 1
+
             if 500 <= r.status_code < 600:
                 ultimo_error = f"BCRA respondió {r.status_code}"
-                await asyncio.sleep(1 + intento * 2)
+                # Esperas progresivas para errores del servidor
+                await asyncio.sleep(1 + intento)
+                intento += 1
                 continue
+
             raise HTTPException(502, f"BCRA devolvió status {r.status_code}")
 
         except httpx.TimeoutException:
             ultimo_error = f"timeout después de {HTTP_TIMEOUT}s"
-            await asyncio.sleep(1 + intento * 2)
+            await asyncio.sleep(1 + intento)
+            intento += 1
         except httpx.ReadError:
-            ultimo_error = "conexión cortada por el BCRA (rate limit)"
-            await asyncio.sleep(2 + intento * 3)
+            # Este es el error típico del BCRA. Reintentamos rápido los primeros,
+            # y más despacio si persiste.
+            ultimo_error = "conexión cortada por el BCRA"
+            intentos_readerror += 1
+            if intentos_readerror <= 3:
+                await asyncio.sleep(0.5)  # primeros reintentos rápidos
+            elif intentos_readerror <= 5:
+                await asyncio.sleep(1.5)
+            else:
+                await asyncio.sleep(3)
+            intento += 1
         except Exception as exc:
+            # Errores que no son ReadError: menos reintentos
             ultimo_error = f"{type(exc).__name__}: {str(exc)[:150]}"
+            if intento >= HTTP_REINTENTOS_OTROS:
+                break
             await asyncio.sleep(1 + intento * 2)
+            intento += 1
 
-    raise HTTPException(502, f"BCRA no disponible tras {HTTP_REINTENTOS} intentos. {ultimo_error}.")
+    raise HTTPException(
+        502,
+        f"BCRA no disponible tras {intento} intentos. {ultimo_error}."
+    )
 
 
 def evaluar_situacion_crediticia(deudas, cfg):
@@ -206,12 +231,12 @@ def _parse_fecha(s):
 async def root():
     return {
         "servicio": "CHEQ-OK API",
-        "version": "0.2.0",
+        "version": "0.2.1",
         "cache_entries": len(_CACHE),
         "cache_ttl_horas": CACHE_TTL_SEGUNDOS / 3600,
+        "reintentos_max": HTTP_REINTENTOS_READERROR,
         "endpoints": {
             "evaluar": "/evaluar/{cuit}",
-            "precargar": "/precargar/{cuit}",
             "config": "/config",
             "cache/clear": "/cache/clear",
             "docs": "/docs",
@@ -221,19 +246,18 @@ async def root():
 
 @app.get("/evaluar/{cuit}", response_model=Evaluacion)
 async def evaluar(cuit: str):
-    """Evalúa un CUIT. Hace las dos consultas al BCRA EN PARALELO."""
     inicio = time.time()
     cuit_limpio = validar_cuit(cuit)
     cfg = get_config()
 
-    # CAMBIO CLAVE: las dos consultas al BCRA van en paralelo
-    (deudas, d_cache), (cheques, c_cache) = await asyncio.gather(
+    (deudas, d_cache, d_intentos), (cheques, c_cache, c_intentos) = await asyncio.gather(
         consultar_bcra("", cuit_limpio),
         consultar_bcra("ChequesRechazados", cuit_limpio),
     )
 
     desde_cache = d_cache and c_cache
     tiempo_ms = int((time.time() - inicio) * 1000)
+    intentos_total = max(d_intentos, c_intentos)
 
     motivos = []
     denominacion = None
@@ -248,7 +272,7 @@ async def evaluar(cuit: str):
             )],
             resumen="VERDE · Sin antecedentes en BCRA.",
             consultado_en=datetime.now(), config_aplicada=cfg,
-            desde_cache=desde_cache, tiempo_ms=tiempo_ms,
+            desde_cache=desde_cache, tiempo_ms=tiempo_ms, intentos=intentos_total,
         )
 
     if deudas:
@@ -272,24 +296,8 @@ async def evaluar(cuit: str):
         motivos=motivos, resumen=resumen,
         detalle_deudas=deudas, detalle_cheques_rechazados=cheques,
         consultado_en=datetime.now(), config_aplicada=cfg,
-        desde_cache=desde_cache, tiempo_ms=tiempo_ms,
+        desde_cache=desde_cache, tiempo_ms=tiempo_ms, intentos=intentos_total,
     )
-
-
-@app.get("/precargar/{cuit}")
-async def precargar(cuit: str):
-    """Pre-carga las consultas de un CUIT en cache sin devolver el análisis
-    completo. Se usa desde la web cuando el usuario empieza a escribir el CUIT,
-    para que cuando apriete Evaluar la respuesta sea instantánea."""
-    cuit_limpio = validar_cuit(cuit)
-    try:
-        await asyncio.gather(
-            consultar_bcra("", cuit_limpio),
-            consultar_bcra("ChequesRechazados", cuit_limpio),
-        )
-        return {"ok": True, "cuit": cuit_limpio, "precargado": True}
-    except Exception as e:
-        return {"ok": False, "cuit": cuit_limpio, "error": str(e)}
 
 
 @app.get("/config")
