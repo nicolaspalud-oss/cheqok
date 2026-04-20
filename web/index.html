@@ -459,12 +459,9 @@
         // Filtramos candidatos por posición: solo los del 50% inferior
         const candidatos = extraerCuitConPosicion(resultado.data);
 
-        if (candidatos.length > 0 && resultado.confianza > 50) {
+   if (candidatos.length > 0) {
           mejorResultado = { ...resultado, candidatos };
           break;
-        }
-        if (candidatos.length > 0 && (!mejorResultado || resultado.confianza > mejorResultado.confianza)) {
-          mejorResultado = { ...resultado, candidatos };
         }
       }
 
