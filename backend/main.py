@@ -466,7 +466,9 @@ async def ver_config():
 
 
 @app.post("/config")
-async def actualizar_config(body: ConfigUpdate):
+async def actualizar_config(body: ConfigUpdate, usuario: str = Depends(verificar_token)):
+    if usuario != ADMIN_USER:
+        raise HTTPException(403, "Solo el administrador puede modificar las reglas")
     nuevos = {k: v for k, v in body.dict().items() if v is not None}
     return set_config(nuevos)
 
