@@ -38,10 +38,14 @@
   html { scroll-behavior: smooth; }
   body { font-family: 'Inter', -apple-system, sans-serif; background: var(--crema); color: var(--tinta); min-height: 100vh; line-height: 1.55; }
   .topbar { background: var(--blanco); border-bottom: 1px solid var(--linea); padding: 0; }
-  .topbar-inner { max-width: 980px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar-inner { max-width: 980px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
   .logo-wrap { display: flex; align-items: center; gap: 14px; }
   .logo-img { height: 280px; width: auto; display: block; }
-  .topbar-meta { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--tinta-faint); font-weight: 600; }
+  .user-info { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+  .user-info .user-name { color: var(--azul-profundo); font-weight: 600; }
+  .user-info .user-role { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tinta-faint); background: var(--azul-muy-claro); padding: 3px 8px; border-radius: 3px; }
+  .btn-logout { background: transparent; border: 1px solid var(--linea-fuerte); color: var(--tinta-dim); padding: 8px 14px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border-radius: 3px; transition: all 0.15s; }
+  .btn-logout:hover { border-color: var(--rojo); color: var(--rojo); }
   .container { max-width: 980px; margin: 0 auto; padding: 48px 32px 80px; }
   .hero { margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--linea); }
   .eyebrow { display: inline-block; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--azul-medio); font-weight: 700; margin-bottom: 14px; padding: 5px 10px; background: var(--azul-muy-claro); border-radius: 2px; }
@@ -50,14 +54,13 @@
   .lead { color: var(--tinta-dim); font-size: 16px; max-width: 620px; line-height: 1.7; }
   .panel { background: var(--blanco); border: 1px solid var(--linea); border-radius: 6px; padding: 32px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0, 49, 99, 0.04); }
   .form-row { display: flex; gap: 12px; align-items: stretch; }
-  input[type="text"] { flex: 1; background: var(--crema); border: 1px solid var(--linea-fuerte); color: var(--tinta); padding: 15px 18px; font-family: 'JetBrains Mono', monospace; font-size: 15px; letter-spacing: 0.02em; border-radius: 4px; outline: none; transition: all 0.15s; }
-  input[type="text"]:focus { border-color: var(--azul-medio); background: var(--blanco); box-shadow: 0 0 0 3px rgba(39, 122, 192, 0.15); }
+  input[type="text"], input[type="password"] { flex: 1; background: var(--crema); border: 1px solid var(--linea-fuerte); color: var(--tinta); padding: 15px 18px; font-family: 'JetBrains Mono', monospace; font-size: 15px; letter-spacing: 0.02em; border-radius: 4px; outline: none; transition: all 0.15s; width: 100%; }
+  input[type="text"]:focus, input[type="password"]:focus { border-color: var(--azul-medio); background: var(--blanco); box-shadow: 0 0 0 3px rgba(39, 122, 192, 0.15); }
   button.btn-primary { background: var(--azul-profundo); color: var(--blanco); border: none; padding: 0 32px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
   button.btn-primary:hover:not(:disabled) { background: var(--azul-medio); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 49, 99, 0.2); }
   button.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
   .ocr-zone { background: var(--blanco); border: 2px dashed var(--linea-fuerte); border-radius: 6px; padding: 32px; margin-bottom: 20px; text-align: center; transition: all 0.2s; cursor: pointer; position: relative; }
   .ocr-zone:hover { border-color: var(--azul-medio); background: var(--azul-muy-claro); }
-  .ocr-zone.dragging { border-color: var(--azul-medio); background: var(--azul-muy-claro); transform: scale(1.01); }
   .ocr-zone input[type="file"] { position: absolute; opacity: 0; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer; }
   .ocr-icon { font-size: 36px; color: var(--azul-medio); margin-bottom: 12px; line-height: 1; }
   .ocr-title { font-family: 'Playfair Display', Georgia, serif; font-size: 20px; font-weight: 600; color: var(--azul-profundo); margin-bottom: 4px; }
@@ -70,9 +73,9 @@
   .ocr-candidatos { margin-top: 20px; padding: 20px; background: var(--amarillo-bg); border: 1px solid var(--amarillo-borde); border-left: 3px solid var(--amarillo); border-radius: 4px; text-align: left; }
   .ocr-candidatos-titulo { font-weight: 600; color: var(--amarillo); font-size: 13px; margin-bottom: 10px; }
   .ocr-candidatos-lista { display: flex; flex-wrap: wrap; gap: 8px; }
-  .ocr-candidato-btn { background: var(--blanco); border: 1px solid var(--linea-fuerte); color: var(--azul-profundo); padding: 10px 14px; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; border-radius: 3px; cursor: pointer; transition: all 0.15s; }
+  .ocr-candidato-btn { background: var(--blanco); border: 1px solid var(--linea-fuerte); color: var(--azul-profundo); padding: 10px 14px; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; border-radius: 3px; cursor: pointer; }
   .ocr-candidato-btn:hover { border-color: var(--azul-medio); background: var(--azul-muy-claro); }
-  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--linea); }
+  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--linea); flex-wrap: wrap; }
   .tab-btn { background: transparent; border: none; padding: 14px 20px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tinta-faint); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; margin-bottom: -1px; }
   .tab-btn:hover { color: var(--azul-medio); }
   .tab-btn.active { color: var(--azul-profundo); border-bottom-color: var(--azul-profundo); }
@@ -80,16 +83,15 @@
   .tab-content.active { display: block; }
   .ejemplos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; align-items: center; }
   .ejemplos-label { color: var(--tinta-faint); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; margin-right: 4px; }
-  .ejemplos code { font-family: 'JetBrains Mono', monospace; font-size: 11px; background: var(--crema); padding: 6px 12px; border-radius: 3px; color: var(--azul-profundo); cursor: pointer; border: 1px solid var(--linea); transition: all 0.15s; font-weight: 500; }
+  .ejemplos code { font-family: 'JetBrains Mono', monospace; font-size: 11px; background: var(--crema); padding: 6px 12px; border-radius: 3px; color: var(--azul-profundo); cursor: pointer; border: 1px solid var(--linea); font-weight: 500; }
   .ejemplos code:hover { color: var(--azul-medio); border-color: var(--azul-medio); background: var(--azul-muy-claro); }
-  details.config { background: var(--blanco); border: 1px solid var(--linea); border-radius: 6px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0, 49, 99, 0.04); }
+  details.config { background: var(--blanco); border: 1px solid var(--linea); border-radius: 6px; margin-bottom: 20px; }
   details.config summary { padding: 18px 28px; cursor: pointer; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--tinta-dim); font-weight: 700; list-style: none; display: flex; justify-content: space-between; align-items: center; }
   details.config summary::-webkit-details-marker { display: none; }
-  details.config summary::after { content: "+"; font-size: 20px; color: var(--azul-medio); font-weight: 400; }
+  details.config summary::after { content: "+"; font-size: 20px; color: var(--azul-medio); }
   details.config[open] summary::after { content: "−"; }
   .config-body { padding: 0 28px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .config-field label { display: block; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tinta-faint); margin-bottom: 8px; font-weight: 600; }
-  .config-field input { width: 100%; }
   .resultado { margin-top: 28px; }
   .semaforo { padding: 36px; border-radius: 6px; border: 1px solid; margin-bottom: 24px; position: relative; overflow: hidden; }
   .semaforo::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
@@ -114,15 +116,34 @@
   .motivo.amarillo { border-left-color: #d89838; }
   .motivo.info { border-left-color: var(--azul-medio); color: var(--tinta-dim); }
   .motivo-cat { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--tinta-faint); margin-bottom: 6px; font-weight: 700; }
-  details.detalle { background: var(--blanco); border: 1px solid var(--linea); border-radius: 6px; margin-top: 20px; }
-  details.detalle summary { padding: 16px 22px; cursor: pointer; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--tinta-faint); font-weight: 700; list-style: none; }
-  details.detalle summary::-webkit-details-marker { display: none; }
-  details.detalle pre { padding: 0 22px 22px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--tinta-dim); overflow-x: auto; line-height: 1.65; }
   .loading { text-align: center; color: var(--tinta-dim); padding: 44px 20px; font-size: 14px; font-weight: 500; }
   .loading::after { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--azul-medio); margin-left: 10px; animation: pulse 1s infinite; }
   @keyframes pulse { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
   .error-box { background: var(--rojo-bg); border: 1px solid var(--rojo-borde); border-left: 4px solid var(--rojo); padding: 22px; border-radius: 4px; color: var(--tinta); margin-top: 24px; }
   .error-box strong { color: var(--rojo); }
+  .login-bg { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, var(--crema) 0%, var(--azul-muy-claro) 100%); }
+  .login-card { background: var(--blanco); border: 1px solid var(--linea); border-radius: 8px; padding: 48px 40px; max-width: 440px; width: 100%; box-shadow: 0 10px 40px rgba(0, 49, 99, 0.1); }
+  .login-logo { text-align: center; margin-bottom: 28px; }
+  .login-logo img { max-height: 120px; max-width: 280px; }
+  .login-card h2 { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--azul-profundo); text-align: center; margin-bottom: 8px; }
+  .login-card .sub { color: var(--tinta-dim); font-size: 14px; text-align: center; margin-bottom: 32px; }
+  .login-field { margin-bottom: 16px; }
+  .login-field label { display: block; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tinta-faint); margin-bottom: 8px; font-weight: 600; }
+  .login-btn-wrap { margin-top: 24px; }
+  .login-card .btn-primary { width: 100%; padding: 16px; }
+  .login-error { background: var(--rojo-bg); border: 1px solid var(--rojo-borde); color: var(--rojo); padding: 12px 16px; border-radius: 4px; font-size: 13px; margin-bottom: 16px; display: none; }
+  .historial-filtros { background: var(--blanco); border: 1px solid var(--linea); border-radius: 6px; padding: 20px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+  .historial-tabla { background: var(--blanco); border: 1px solid var(--linea); border-radius: 6px; overflow: hidden; overflow-x: auto; }
+  .historial-tabla table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 700px; }
+  .historial-tabla th { text-align: left; padding: 12px 16px; background: var(--crema); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tinta-faint); font-weight: 700; border-bottom: 1px solid var(--linea); }
+  .historial-tabla td { padding: 12px 16px; border-bottom: 1px solid var(--linea); vertical-align: top; }
+  .historial-tabla tr:last-child td { border-bottom: none; }
+  .historial-tabla tr:hover { background: var(--crema); }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 3px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; }
+  .badge.verde { background: var(--verde-bg); color: var(--verde); border: 1px solid var(--verde-borde); }
+  .badge.rojo { background: var(--rojo-bg); color: var(--rojo); border: 1px solid var(--rojo-borde); }
+  .badge.error { background: #f5f2ec; color: var(--tinta-dim); border: 1px solid var(--linea-fuerte); }
+  .historial-empty { padding: 60px 20px; text-align: center; color: var(--tinta-faint); }
   footer { margin-top: 70px; padding-top: 28px; border-top: 1px solid var(--linea); color: var(--tinta-faint); font-size: 12px; line-height: 1.7; }
   footer a { color: var(--azul-profundo); text-decoration: none; border-bottom: 1px solid var(--linea-fuerte); }
   footer a:hover { color: var(--azul-medio); border-bottom-color: var(--azul-medio); }
@@ -131,27 +152,54 @@
   .backend-info { margin-top: 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
   @media (max-width: 640px) {
     .container { padding: 32px 20px 60px; }
-    .topbar-inner { padding: 0 20px; }
-    .topbar-meta { display: none; }
+    .topbar-inner { padding: 0 20px; flex-direction: column; gap: 12px; padding-top: 12px; padding-bottom: 12px; }
     .form-row { flex-direction: column; }
     button.btn-primary { padding: 14px; }
     .config-body { grid-template-columns: 1fr; }
     h1.titulo { font-size: 36px; }
     .semaforo { padding: 24px; }
     .semaforo-titulo { font-size: 24px; }
-    .logo-img { height: 180px; }
+    .logo-img { height: 120px; }
     .tab-btn { padding: 12px 12px; font-size: 11px; }
+    .historial-filtros { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
+<!-- Pantalla de login -->
+<div id="login-screen" class="login-bg" style="display:none;">
+  <div class="login-card">
+    <div class="login-logo"><img src="assets/logo.png" alt="Familia Inversora"></div>
+    <h2>CHEQ · OK</h2>
+    <div class="sub">Ingresá con tu usuario y clave</div>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-field">
+      <label for="login-user">Usuario</label>
+      <input type="text" id="login-user" autocomplete="username" placeholder="Ej: Bruno.Sartor">
+    </div>
+    <div class="login-field">
+      <label for="login-pass">Clave</label>
+      <input type="password" id="login-pass" autocomplete="current-password">
+    </div>
+    <div class="login-btn-wrap">
+      <button class="btn-primary" id="login-btn">Ingresar</button>
+    </div>
+  </div>
+</div>
+
+<!-- App principal (oculta hasta login) -->
+<div id="app-screen" style="display:none;">
   <div class="topbar">
     <div class="topbar-inner">
       <div class="logo-wrap">
         <img src="assets/logo.png" alt="Familia Inversora" class="logo-img">
       </div>
-      <div class="topbar-meta">CHEQ · OK <span style="color:var(--linea-fuerte); margin:0 6px;">/</span> v0.2.1</div>
+      <div class="user-info">
+        <span class="user-name" id="user-name"></span>
+        <span class="user-role" id="user-role"></span>
+        <button class="btn-logout" id="btn-logout">Salir</button>
+      </div>
     </div>
   </div>
 
@@ -159,17 +207,14 @@
     <div class="hero">
       <span class="eyebrow">Evaluación de cheques</span>
       <h1 class="titulo">¿Conviene recibir <em>este cheque</em>?</h1>
-      <p class="lead">
-        Sacale una foto al cheque o ingresá el CUIT del librador y obtené en segundos
-        una recomendación basada en la Central de Deudores del BCRA. Verde (conviene)
-        o rojo (no conviene).
-      </p>
+      <p class="lead">Sacale una foto al cheque o ingresá el CUIT del librador y obtené una recomendación basada en la Central de Deudores del BCRA.</p>
     </div>
 
     <div class="panel">
-      <div class="tabs">
+      <div class="tabs" id="tabs-principal">
         <button class="tab-btn active" data-tab="foto">📷 Sacar foto</button>
         <button class="tab-btn" data-tab="cuit">⌨ Ingresar CUIT</button>
+        <button class="tab-btn" data-tab="historial">📋 Historial</button>
       </div>
 
       <div class="tab-content active" id="tab-foto">
@@ -186,17 +231,14 @@
 
       <div class="tab-content" id="tab-cuit">
         <div class="form-row">
-          <input type="text" id="cuit" placeholder="CUIT del librador (11 dígitos, con o sin guiones)" autocomplete="off">
+          <input type="text" id="cuit" placeholder="CUIT del librador (11 dígitos)" autocomplete="off">
           <button class="btn-primary" id="btn-evaluar">Evaluar</button>
         </div>
-        <div class="ejemplos">
-          <span class="ejemplos-label">Ejemplos:</span>
-          <code onclick="usarCuit('30-71069741-1')">30-71069741-1</code>
-          <code onclick="usarCuit('27-21651503-5')">27-21651503-5</code>
-          <code onclick="usarCuit('20-28606134-7')">20-28606134-7</code>
-          <code onclick="usarCuit('30-71857785-7')">30-71857785-7</code>
-          <code onclick="usarCuit('27-95735532-9')">27-95735532-9</code>
-        </div>
+      </div>
+
+      <div class="tab-content" id="tab-historial">
+        <div id="historial-filtros-wrap"></div>
+        <div id="historial-content"></div>
       </div>
     </div>
 
@@ -222,26 +264,26 @@
         <span>Una herramienta de <strong>Familia Inversora</strong> · Finanzas &amp; Empresas Familiares</span>
       </div>
       Los datos provienen de la <a href="https://www.bcra.gob.ar/" target="_blank">API pública del BCRA · Central de Deudores</a>.
-      La información publicada por el BCRA tiene un desfase de hasta 1 o 2 meses respecto del último período cerrado.
-      El OCR corre localmente en tu dispositivo, ninguna foto se sube a servidores.
-      Esta herramienta es una ayuda a la decisión y no reemplaza el criterio del usuario.
-      <div class="backend-info">
-        <a href="#" id="cambiar-backend">Cambiar URL del backend</a> · <span id="backend-actual"></span>
-      </div>
+      La información publicada tiene un desfase de hasta 1 o 2 meses.
+      <div class="backend-info">Backend: <span id="backend-actual"></span></div>
     </footer>
   </div>
+</div><script>
+  const API_BASE = "https://cheqok.onrender.com";
+  let AUTH_TOKEN = localStorage.getItem('cheqok_token') || '';
+  let USER_NAME = localStorage.getItem('cheqok_user') || '';
+  let ES_ADMIN = localStorage.getItem('cheqok_admin') === 'true';
 
-<script>
-  // CONFIGURACIÓN BACKEND
-  let API_BASE = localStorage.getItem('cheqok_api_base') || '';
-  if (!API_BASE) {
-    API_BASE = prompt(
-      'URL del backend CHEQ-OK\n\nEjemplo: https://cheqok.onrender.com',
-      'https://cheqok.onrender.com'
-    ) || 'https://cheqok.onrender.com';
-    localStorage.setItem('cheqok_api_base', API_BASE);
-  }
-
+  // Elementos
+  const $loginScreen = document.getElementById('login-screen');
+  const $appScreen = document.getElementById('app-screen');
+  const $loginUser = document.getElementById('login-user');
+  const $loginPass = document.getElementById('login-pass');
+  const $loginBtn = document.getElementById('login-btn');
+  const $loginError = document.getElementById('login-error');
+  const $userName = document.getElementById('user-name');
+  const $userRole = document.getElementById('user-role');
+  const $btnLogout = document.getElementById('btn-logout');
   const $cuit = document.getElementById('cuit');
   const $btn = document.getElementById('btn-evaluar');
   const $out = document.getElementById('resultado');
@@ -253,6 +295,69 @@
   const $ocrProgress = document.getElementById('ocr-progress');
   const $ocrCandidatos = document.getElementById('ocr-candidatos');
 
+  // LOGIN / LOGOUT
+  function mostrarApp() {
+    $loginScreen.style.display = 'none';
+    $appScreen.style.display = 'block';
+    $userName.textContent = USER_NAME;
+    $userRole.textContent = ES_ADMIN ? 'Admin' : 'Vendedor';
+    document.getElementById('backend-actual').textContent = API_BASE;
+  }
+  function mostrarLogin() {
+    $appScreen.style.display = 'none';
+    $loginScreen.style.display = 'flex';
+    $loginUser.focus();
+  }
+  async function hacerLogin() {
+    $loginError.style.display = 'none';
+    const usuario = $loginUser.value.trim();
+    const clave = $loginPass.value;
+    if (!usuario || !clave) return;
+    $loginBtn.disabled = true;
+    $loginBtn.textContent = 'Verificando...';
+    try {
+      const r = await fetch(`${API_BASE}/login`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({usuario, clave}),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        $loginError.textContent = data.detail || 'Error de login';
+        $loginError.style.display = 'block';
+        return;
+      }
+      AUTH_TOKEN = data.token;
+      USER_NAME = data.usuario;
+      ES_ADMIN = data.es_admin;
+      localStorage.setItem('cheqok_token', AUTH_TOKEN);
+      localStorage.setItem('cheqok_user', USER_NAME);
+      localStorage.setItem('cheqok_admin', ES_ADMIN ? 'true' : 'false');
+      mostrarApp();
+    } catch (e) {
+      $loginError.textContent = 'No se pudo conectar al servidor';
+      $loginError.style.display = 'block';
+    } finally {
+      $loginBtn.disabled = false;
+      $loginBtn.textContent = 'Ingresar';
+    }
+  }
+  function hacerLogout() {
+    AUTH_TOKEN = '';
+    USER_NAME = '';
+    ES_ADMIN = false;
+    localStorage.removeItem('cheqok_token');
+    localStorage.removeItem('cheqok_user');
+    localStorage.removeItem('cheqok_admin');
+    $loginUser.value = '';
+    $loginPass.value = '';
+    mostrarLogin();
+  }
+  $loginBtn.addEventListener('click', hacerLogin);
+  $loginPass.addEventListener('keydown', e => { if (e.key === 'Enter') hacerLogin(); });
+  $loginUser.addEventListener('keydown', e => { if (e.key === 'Enter') $loginPass.focus(); });
+  $btnLogout.addEventListener('click', hacerLogout);
+
   // TABS
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -260,11 +365,12 @@
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'historial') cargarHistorial();
     });
   });
 
+  // EVALUAR
   function usarCuit(c) { $cuit.value = c; evaluar(); }
-
   async function guardarConfig() {
     const body = {
       umbral_monto_sit2: Number($umbral.value.replace(/[^\d.]/g, '')),
@@ -272,13 +378,10 @@
     };
     try {
       await fetch(`${API_BASE}/config`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(body),
+        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body),
       });
     } catch (e) {}
   }
-
   async function evaluar() {
     const cuit = $cuit.value.trim();
     if (!cuit) { $cuit.focus(); return; }
@@ -286,20 +389,22 @@
     $out.innerHTML = '<div class="loading">Consultando BCRA</div>';
     await guardarConfig();
     try {
-      const r = await fetch(`${API_BASE}/evaluar/${encodeURIComponent(cuit)}`);
+      const r = await fetch(`${API_BASE}/evaluar/${encodeURIComponent(cuit)}`, {
+        headers: {'Authorization': `Bearer ${AUTH_TOKEN}`},
+      });
       const data = await r.json();
+      if (r.status === 401) { hacerLogout(); return; }
       if (!r.ok) {
         $out.innerHTML = `<div class="error-box"><strong>Error ${r.status}:</strong> ${data.detail || 'Consulta fallida'}</div>`;
         return;
       }
       renderResultado(data);
     } catch (e) {
-      $out.innerHTML = `<div class="error-box"><strong>No se pudo conectar al backend.</strong><br>Asegurate de que esté corriendo en <code>${API_BASE}</code>.<br><small>Detalle: ${e.message}</small></div>`;
+      $out.innerHTML = `<div class="error-box"><strong>No se pudo conectar al backend.</strong><br><small>${e.message}</small></div>`;
     } finally {
       $btn.disabled = false;
     }
   }
-
   function renderResultado(data) {
     const clase = data.semaforo.toLowerCase();
     const titulo = data.semaforo === 'VERDE' ? 'Conviene recibir' : 'No conviene recibir';
@@ -318,112 +423,139 @@
     if (data.motivos && data.motivos.length > 0) {
       html += '<div class="section-title">Motivos</div><ul class="motivos">';
       for (const m of data.motivos) {
-        const catLabel = {
-          situacion_crediticia: 'Situación crediticia',
-          cheque_pendiente: 'Cheque pendiente',
-          cheque_reciente: 'Cheque rechazado reciente',
-          sin_antecedentes: 'Sin antecedentes',
-        }[m.categoria] || m.categoria;
+        const catLabel = {situacion_crediticia: 'Situación crediticia', cheque_pendiente: 'Cheque pendiente', cheque_reciente: 'Cheque rechazado reciente', sin_antecedentes: 'Sin antecedentes'}[m.categoria] || m.categoria;
         html += `<li class="motivo ${m.severidad}"><div class="motivo-cat">${catLabel}</div>${m.descripcion}</li>`;
       }
       html += '</ul>';
     }
-    html += `<details class="detalle"><summary>Ver respuesta completa del BCRA (JSON)</summary><pre>${JSON.stringify({deudas: data.detalle_deudas, cheques_rechazados: data.detalle_cheques_rechazados, consultado_en: data.consultado_en, config_aplicada: data.config_aplicada, desde_cache: data.desde_cache}, null, 2)}</pre></details>`;
     $out.innerHTML = html;
   }
-
   $btn.addEventListener('click', evaluar);
   $cuit.addEventListener('keydown', e => { if (e.key === 'Enter') evaluar(); });
 
+  // HISTORIAL
+  async function cargarHistorial(filtroUsuario = '', desde = '', hasta = '') {
+    const $contentEl = document.getElementById('historial-content');
+    const $filtrosEl = document.getElementById('historial-filtros-wrap');
+    $contentEl.innerHTML = '<div class="loading">Cargando historial</div>';
+    if (ES_ADMIN && !$filtrosEl.innerHTML) {
+      $filtrosEl.innerHTML = `
+        <div class="historial-filtros">
+          <div class="config-field"><label>Usuario</label><input type="text" id="filtro-usuario" placeholder="Dejá vacío para todos"></div>
+          <div class="config-field"><label>Desde</label><input type="text" id="filtro-desde" placeholder="YYYY-MM-DD"></div>
+          <div class="config-field"><label>Hasta</label><input type="text" id="filtro-hasta" placeholder="YYYY-MM-DD"></div>
+          <button class="btn-primary" id="btn-aplicar-filtros">Filtrar</button>
+        </div>`;
+      document.getElementById('btn-aplicar-filtros').addEventListener('click', () => {
+        cargarHistorial(
+          document.getElementById('filtro-usuario').value.trim(),
+          document.getElementById('filtro-desde').value.trim(),
+          document.getElementById('filtro-hasta').value.trim(),
+        );
+      });
+    }
+    try {
+      let url = `${API_BASE}/historial?limit=200`;
+      if (filtroUsuario) url += `&filtro_usuario=${encodeURIComponent(filtroUsuario)}`;
+      if (desde) url += `&desde=${encodeURIComponent(desde)}`;
+      if (hasta) url += `&hasta=${encodeURIComponent(hasta)}`;
+      const r = await fetch(url, {headers: {'Authorization': `Bearer ${AUTH_TOKEN}`}});
+      if (r.status === 401) { hacerLogout(); return; }
+      const data = await r.json();
+      if (!r.ok) {
+        $contentEl.innerHTML = `<div class="error-box"><strong>Error:</strong> ${data.detail || 'No se pudo cargar el historial'}</div>`;
+        return;
+      }
+      if (!data.consultas || data.consultas.length === 0) {
+        $contentEl.innerHTML = `<div class="historial-empty">No hay consultas registradas ${ES_ADMIN ? '' : 'en los últimos 30 días'}.</div>`;
+        return;
+      }
+      const filas = data.consultas.map(c => {
+        const fecha = new Date(c.created_at);
+        const fechaStr = fecha.toLocaleString('es-AR', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'});
+        let badge;
+        if (c.error) {
+          badge = '<span class="badge error">Error</span>';
+        } else if (c.semaforo === 'VERDE') {
+          badge = '<span class="badge verde">VERDE</span>';
+        } else if (c.semaforo === 'ROJO') {
+          badge = '<span class="badge rojo">ROJO</span>';
+        } else {
+          badge = '<span class="badge error">-</span>';
+        }
+        const denom = c.denominacion || '-';
+        const detalle = c.error ? `<span style="color:var(--rojo)">${c.error}</span>` : (c.resumen || '-');
+        return `<tr>
+          <td>${fechaStr}</td>
+          <td>${c.usuario}</td>
+          <td style="font-family:'JetBrains Mono',monospace;">${c.cuit}</td>
+          <td>${badge}</td>
+          <td>${denom}</td>
+          <td style="color:var(--tinta-dim);font-size:12px;">${detalle}</td>
+        </tr>`;
+      }).join('');
+      $contentEl.innerHTML = `
+        <div class="historial-tabla">
+          <table>
+            <thead><tr>
+              <th>Fecha</th><th>Usuario</th><th>CUIT</th><th>Resultado</th><th>Denominación</th><th>Detalle</th>
+            </tr></thead>
+            <tbody>${filas}</tbody>
+          </table>
+        </div>
+        <div style="text-align:center; color:var(--tinta-faint); font-size:12px; margin-top:12px;">${data.total} consulta(s) ${ES_ADMIN ? '' : '· últimos 30 días'}</div>`;
+    } catch (e) {
+      $contentEl.innerHTML = `<div class="error-box"><strong>Error:</strong> ${e.message}</div>`;
+    }
+  }
+
   // OCR
   const PREFIJOS_VALIDOS = ['20', '23', '24', '27', '30', '33', '34'];
-
   function extraerCuitDeTexto(texto) {
-    const limpio = texto.toUpperCase()
-      .replace(/[^A-Z0-9\s\-/.:]/g, ' ')
-      .replace(/\s+/g, ' ');
+    const limpio = texto.toUpperCase().replace(/[^A-Z0-9\s\-/.:]/g, ' ').replace(/\s+/g, ' ');
     const regex = /\b(\d{2}[\s\-\.]?\d{8}[\s\-\.]?\d{1})\b/g;
     const encontrados = new Set();
     let match;
     while ((match = regex.exec(limpio)) !== null) {
       const soloDigitos = match[1].replace(/[\s\-\.]/g, '');
-      if (soloDigitos.length === 11 && PREFIJOS_VALIDOS.includes(soloDigitos.substring(0, 2))) {
-        encontrados.add(soloDigitos);
-      }
+      if (soloDigitos.length === 11 && PREFIJOS_VALIDOS.includes(soloDigitos.substring(0, 2))) encontrados.add(soloDigitos);
     }
-    const candidatos = Array.from(encontrados);
-    const puntuados = candidatos.map(c => {
-      let puntaje = 0;
-      const pos = limpio.indexOf(c.substring(0, 2));
-      const ventana = limpio.substring(Math.max(0, pos - 50), pos);
-      if (ventana.includes('CUIT')) puntaje += 10;
-      if (ventana.includes('CUIL')) puntaje += 8;
-      if (ventana.includes('LIBRADOR') || ventana.includes('EMISOR')) puntaje += 5;
-      return { cuit: c, puntaje };
-    });
-    puntuados.sort((a, b) => b.puntaje - a.puntaje);
-    return puntuados.map(p => p.cuit);
+    return Array.from(encontrados);
   }
-
-  function formatearCuit(c) {
-    return `${c.substring(0, 2)}-${c.substring(2, 10)}-${c.substring(10)}`;
-  }
-
+  function formatearCuit(c) { return `${c.substring(0, 2)}-${c.substring(2, 10)}-${c.substring(10)}`; }
   async function rotarImagen(file, grados) {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        if (grados === 90 || grados === 270) {
-          canvas.width = img.height;
-          canvas.height = img.width;
-        } else {
-          canvas.width = img.width;
-          canvas.height = img.height;
-        }
-        ctx.translate(canvas.width / 2, canvas.height / 2);
+        if (grados === 90 || grados === 270) { canvas.width = img.height; canvas.height = img.width; }
+        else { canvas.width = img.width; canvas.height = img.height; }
+        ctx.translate(canvas.width/2, canvas.height/2);
         ctx.rotate(grados * Math.PI / 180);
-        ctx.drawImage(img, -img.width / 2, -img.height / 2);
+        ctx.drawImage(img, -img.width/2, -img.height/2);
         canvas.toBlob(resolve, 'image/jpeg', 0.9);
       };
       img.onerror = reject;
       img.src = URL.createObjectURL(file);
     });
   }
-
-  // Filtra los CUIT encontrados tomando solo los que estén en la MITAD INFERIOR
-  // de la imagen (y >= 50% del alto). Ahí está el CUIT del librador.
   function extraerCuitConPosicion(data) {
-    if (!data.words || data.words.length === 0) {
-      return extraerCuitDeTexto(data.text);
-    }
+    if (!data.words || data.words.length === 0) return extraerCuitDeTexto(data.text);
     const altoImagen = Math.max(...data.words.map(w => w.bbox ? w.bbox.y1 : 0)) || 1;
-    const umbralY = altoImagen * 0.50; // descartamos el 50% superior
+    const umbralY = altoImagen * 0.50;
     let textoFiltrado = '';
-    for (const w of data.words) {
-      if (w.bbox && w.bbox.y0 >= umbralY) {
-        textoFiltrado += ' ' + w.text;
-      }
-    }
+    for (const w of data.words) { if (w.bbox && w.bbox.y0 >= umbralY) textoFiltrado += ' ' + w.text; }
     return extraerCuitDeTexto(textoFiltrado);
   }
-
   async function probarOrientacion(imagen, label, onProgress) {
     try {
       const { data } = await Tesseract.recognize(imagen, 'spa+eng', {
-        logger: m => {
-          if (m.status === 'recognizing text' && onProgress) {
-            onProgress(m.progress);
-          }
-        }
+        logger: m => { if (m.status === 'recognizing text' && onProgress) onProgress(m.progress); }
       });
       return { label, data, confianza: data.confidence || 0 };
-    } catch (e) {
-      return { label, data: null, confianza: 0 };
-    }
+    } catch (e) { return { label, data: null, confianza: 0 }; }
   }
-
   async function procesarImagen(file) {
     $ocrCandidatos.innerHTML = '';
     $out.innerHTML = '';
@@ -431,123 +563,60 @@
     $ocrPreview.src = url;
     $ocrPreview.style.display = 'block';
     $ocrProgress.style.display = 'block';
-    $ocrProgress.innerHTML = `
-      <div class="ocr-progress">
-        <div class="ocr-progress-label">Leyendo el cheque... <span id="ocr-pct">Probando orientaciones</span></div>
-        <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocr-fill" style="width:0%"></div></div>
-      </div>`;
-
+    $ocrProgress.innerHTML = `<div class="ocr-progress"><div class="ocr-progress-label">Leyendo... <span id="ocr-pct">Probando orientaciones</span></div><div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocr-fill" style="width:0%"></div></div></div>`;
     try {
-      // Orden optimizado: primero 0°, luego 270° (cheque fotografiado acostado
-      // hacia la izquierda), después 90° y finalmente 180°.
       const orientaciones = [0, 270, 90, 180];
       let mejorResultado = null;
-
       for (let i = 0; i < orientaciones.length; i++) {
         const grados = orientaciones[i];
-        document.getElementById('ocr-pct').textContent =
-          `Analizando orientación ${i + 1}/4 (${grados}°)`;
-
+        document.getElementById('ocr-pct').textContent = `Orientación ${i+1}/4 (${grados}°)`;
         const imagen = grados === 0 ? file : await rotarImagen(file, grados);
-        const resultado = await probarOrientacion(imagen, `${grados}°`, (p) => {
-          const totalProgress = (i + p) / 4;
-          document.getElementById('ocr-fill').style.width = Math.round(totalProgress * 100) + '%';
+        const resultado = await probarOrientacion(imagen, `${grados}°`, p => {
+          document.getElementById('ocr-fill').style.width = Math.round((i+p)/4*100) + '%';
         });
-
         if (!resultado.data) continue;
-
-        // Filtramos candidatos por posición: solo los del 50% inferior
         const candidatos = extraerCuitConPosicion(resultado.data);
-
-   if (candidatos.length > 0) {
-          mejorResultado = { ...resultado, candidatos };
-          break;
-        }
+        if (candidatos.length > 0) { mejorResultado = {...resultado, candidatos}; break; }
       }
-
-      // Fallback: si no encontramos nada en el pie, buscamos en toda la imagen
       if (!mejorResultado || mejorResultado.candidatos.length === 0) {
-        document.getElementById('ocr-pct').textContent = 'Ampliando búsqueda a toda la imagen...';
+        document.getElementById('ocr-pct').textContent = 'Ampliando búsqueda...';
         for (let i = 0; i < orientaciones.length; i++) {
           const grados = orientaciones[i];
           const imagen = grados === 0 ? file : await rotarImagen(file, grados);
           const resultado = await probarOrientacion(imagen, `${grados}° (completa)`);
           if (resultado.data) {
             const candidatos = extraerCuitDeTexto(resultado.data.text);
-            if (candidatos.length > 0) {
-              mejorResultado = { ...resultado, candidatos };
-              break;
-            }
+            if (candidatos.length > 0) { mejorResultado = {...resultado, candidatos}; break; }
           }
         }
       }
-
       $ocrProgress.style.display = 'none';
       const candidatos = mejorResultado ? mejorResultado.candidatos : [];
-
       if (candidatos.length === 0) {
-        $ocrCandidatos.innerHTML = `
-          <div class="ocr-candidatos">
-            <div class="ocr-candidatos-titulo">⚠ No se detectó un CUIT claro</div>
-            <div style="color:var(--tinta-dim); font-size:13px; margin-top:8px;">
-              Probá con una foto más nítida, con buena iluminación, y asegurate de que se vea bien el pie del cheque donde está el CUIT del librador.
-              También podés ingresar el CUIT manualmente en la pestaña "Ingresar CUIT".
-            </div>
-          </div>`;
+        $ocrCandidatos.innerHTML = `<div class="ocr-candidatos"><div class="ocr-candidatos-titulo">⚠ No se detectó un CUIT claro</div><div style="color:var(--tinta-dim);font-size:13px;margin-top:8px;">Probá con una foto más nítida, o ingresá el CUIT manualmente.</div></div>`;
       } else if (candidatos.length === 1) {
         $cuit.value = formatearCuit(candidatos[0]);
-        $ocrCandidatos.innerHTML = `
-          <div class="ocr-candidatos" style="background:var(--azul-muy-claro); border-color:var(--azul-medio); border-left-color:var(--azul-medio);">
-            <div class="ocr-candidatos-titulo" style="color:var(--azul-profundo);">✓ CUIT detectado (${mejorResultado.label}): ${formatearCuit(candidatos[0])}</div>
-            <div style="color:var(--tinta-dim); font-size:13px; margin-top:8px;">Consultando BCRA automáticamente...</div>
-          </div>`;
+        $ocrCandidatos.innerHTML = `<div class="ocr-candidatos" style="background:var(--azul-muy-claro);border-color:var(--azul-medio);border-left-color:var(--azul-medio);"><div class="ocr-candidatos-titulo" style="color:var(--azul-profundo);">✓ CUIT detectado (${mejorResultado.label}): ${formatearCuit(candidatos[0])}</div><div style="color:var(--tinta-dim);font-size:13px;margin-top:8px;">Consultando BCRA...</div></div>`;
         evaluar();
       } else {
-        let html = `
-          <div class="ocr-candidatos">
-            <div class="ocr-candidatos-titulo">Se detectaron varios CUIT (${mejorResultado.label}). Elegí el del librador:</div>
-            <div class="ocr-candidatos-lista">`;
-        for (const c of candidatos) {
-          html += `<button class="ocr-candidato-btn" onclick="usarCuit('${formatearCuit(c)}')">${formatearCuit(c)}</button>`;
-        }
+        let html = `<div class="ocr-candidatos"><div class="ocr-candidatos-titulo">Se detectaron varios CUIT. Elegí el del librador:</div><div class="ocr-candidatos-lista">`;
+        for (const c of candidatos) html += `<button class="ocr-candidato-btn" onclick="usarCuit('${formatearCuit(c)}')">${formatearCuit(c)}</button>`;
         html += '</div></div>';
         $ocrCandidatos.innerHTML = html;
       }
     } catch (e) {
       $ocrProgress.style.display = 'none';
-      $ocrCandidatos.innerHTML = `
-        <div class="error-box">
-          <strong>Error procesando la imagen:</strong> ${e.message}<br>
-          <small>Probá con otra foto o ingresá el CUIT manualmente.</small>
-        </div>`;
+      $ocrCandidatos.innerHTML = `<div class="error-box"><strong>Error:</strong> ${e.message}</div>`;
     }
   }
+  $ocrFile.addEventListener('change', e => { const f = e.target.files[0]; if (f) procesarImagen(f); });
+  $ocrZone.addEventListener('dragover', e => { e.preventDefault(); $ocrZone.style.borderColor = 'var(--azul-medio)'; });
+  $ocrZone.addEventListener('dragleave', () => { $ocrZone.style.borderColor = ''; });
+  $ocrZone.addEventListener('drop', e => { e.preventDefault(); $ocrZone.style.borderColor = ''; const f = e.dataTransfer.files[0]; if (f && f.type.startsWith('image/')) procesarImagen(f); });
 
-  $ocrFile.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) procesarImagen(file);
-  });
-
-  $ocrZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    $ocrZone.classList.add('dragging');
-  });
-  $ocrZone.addEventListener('dragleave', () => {
-    $ocrZone.classList.remove('dragging');
-  });
-  $ocrZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    $ocrZone.classList.remove('dragging');
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) procesarImagen(file);
-  });
-
-  document.getElementById('backend-actual').textContent = API_BASE;
-  document.getElementById('cambiar-backend').addEventListener('click', (e) => {
-    e.preventDefault();
-    localStorage.removeItem('cheqok_api_base');
-    location.reload();
-  });
+  // INIT
+  if (AUTH_TOKEN && USER_NAME) mostrarApp();
+  else mostrarLogin();
 </script>
 </body>
 </html>
