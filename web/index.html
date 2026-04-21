@@ -242,7 +242,7 @@
       </div>
     </div>
 
-    <details class="config">
+    <details class="config" id="config-panel" style="display:none;">
       <summary>Configuración de reglas</summary>
       <div class="config-body">
         <div class="config-field">
@@ -302,6 +302,7 @@
     $userName.textContent = USER_NAME;
     $userRole.textContent = ES_ADMIN ? 'Admin' : 'Vendedor';
     document.getElementById('backend-actual').textContent = API_BASE;
+    document.getElementById('config-panel').style.display = ES_ADMIN ? 'block' : 'none';
   }
   function mostrarLogin() {
     $appScreen.style.display = 'none';
